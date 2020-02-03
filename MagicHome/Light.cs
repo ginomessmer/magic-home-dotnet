@@ -72,6 +72,7 @@ namespace MagicHome
         public const int BufferSize = 14;
         #endregion
 
+        #region Constructors
         public Light()
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -81,6 +82,11 @@ namespace MagicHome
         {
             _address = ipAddress;
         }
+
+        public Light(string ipAddress) : this(IPAddress.Parse(ipAddress))
+        {
+        }
+        #endregion
 
         /// <summary>
         /// Connects to the light. You need to assign the IP address manually before you call this method.
@@ -122,6 +128,7 @@ namespace MagicHome
             Color = DetermineColor(Mode, result);
         }
 
+        #region I/O
         /// <summary>
         /// Reads data from the light
         /// </summary>
@@ -180,6 +187,60 @@ namespace MagicHome
 
             return packet;
         }
+        #endregion
+
+        #region Operations
+        #region Power
+        /// <summary>
+        /// Sets the power state of the light.
+        /// </summary>
+        /// <param name="isOn"></param>
+        /// <returns></returns>
+        public async Task SetPowerAsync(bool isOn)
+        {
+            var packet = isOn ? new byte[] {0x71, 0x23, 0x0f} : new byte[] {0x71, 0x24, 0x0f};
+            
+            await SendAsync(packet);
+            IsOn = isOn;
+        }
+
+        /// <summary>
+        /// Turns on the light.
+        /// </summary>
+        /// <returns></returns>
+        public Task TurnOnAsync() => SetPowerAsync(true);
+
+        /// <summary>
+        /// Turns off the light.
+        /// </summary>
+        /// <returns></returns>
+        public Task TurnOffAsync() => SetPowerAsync(false);
+        #endregion
+
+        /// <summary>
+        /// Sets the colors for this light.
+        /// </summary>
+        /// <param name="color"></param>
+        /// <returns></returns>
+        public async Task SetColorAsync(Color color)
+        {
+            await SendAsync(0x41, 
+                color.R, color.G, color.B,
+                0x00, 0x00, 0x0f);
+
+            Color = color;
+            Mode = LightMode.Color;
+        }
+
+        /// <summary>
+        /// Sets the colors for this light.
+        /// </summary>
+        /// <param name="r">R</param>
+        /// <param name="g">G</param>
+        /// <param name="b">B</param>
+        /// <returns></returns>
+        public Task SetColorAsync(byte r, byte g, byte b) => SetColorAsync(Color.FromArgb(r, g, b));
+        #endregion
 
         #region Utils
         private static bool DeterminePowerState(string hex) => hex == "23";

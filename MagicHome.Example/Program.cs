@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Net;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -21,7 +22,13 @@ namespace MagicHome.Example
             var light = new Light();
             await light.ConnectAsync(IPAddress.Parse(address));
 
+            await light.TurnOnAsync();
+
             Console.WriteLine(JsonSerializer.Serialize(light, DefaultJsonOptions));
+
+            await light.SetColorAsync(Color.White);
+            await light.TurnOffAsync();
+
             Console.ReadLine();
         }
     }
