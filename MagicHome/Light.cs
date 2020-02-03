@@ -27,6 +27,11 @@ namespace MagicHome
         public Color Color { get; private set; }
 
         /// <summary>
+        /// Gets the light mode.
+        /// </summary>
+        public LightMode Mode { get; private set; }
+
+        /// <summary>
         /// Specifies whether or not to append checksum to outgoing requests.
         /// </summary>
         public bool UseChecksum { get; set; } = true;
@@ -45,6 +50,12 @@ namespace MagicHome
         /// Magic Home's default port.
         /// </summary>
         public const int Port = 5577;
+
+        /// <summary>
+        /// Buffer size for socket communication.
+        /// </summary>
+        public const int BufferSize = 14;
+
 
         public Light()
         {
@@ -69,17 +80,30 @@ namespace MagicHome
         {
             await SendAsync(0x81, 0x8a, 0x8b); // Send instruction to retrieve data later
             var result = await ReadAsync();
+            
+            var resultAsHex = result.Select(r => r.ToString("X")).ToArray(); // Convert to hex
 
-            // TODO:
+            // Populate properties
+            IsOn = DeterminePowerState(resultAsHex[2]); // Power state
+            Mode = DetermineLightMode(resultAsHex[3]);
+            Color = DetermineColor(Mode, result);
         }
 
         /// <summary>
         /// Reads data from the light
         /// </summary>
         /// <returns></returns>
-        private async Task<byte[]> ReadAsync()
+        private Task<byte[]> ReadAsync()
         {
-            throw new System.NotImplementedException();
+            return Task.Run(() =>
+            {
+                var buffer = new byte[BufferSize];
+                _socket.ReceiveTimeout = Timeout.Milliseconds;
+
+                var result = _socket.Receive(buffer);
+                // TODO: Check result
+                return buffer;
+            });
         }
 
         /// <summary>
@@ -94,12 +118,15 @@ namespace MagicHome
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public async Task SendAsync(IEnumerable<byte> bytes)
+        public Task SendAsync(IEnumerable<byte> bytes)
         {
-            if (UseChecksum)
-                bytes = ApplyChecksum(bytes.ToList());
+            return Task.Run(() =>
+            {
+                if (UseChecksum)
+                    bytes = ApplyChecksum(bytes.ToList());
 
-            _socket.Send(bytes.ToArray());
+                _socket.Send(bytes.ToArray());
+            });
         }
 
         public static IEnumerable<byte> ApplyChecksum(IReadOnlyList<byte> bytes)
@@ -115,5 +142,55 @@ namespace MagicHome
 
             return packet;
         }
+
+        #region Utils
+        private static bool DeterminePowerState(string hex) => hex == "23";
+
+        private static LightMode DetermineLightMode(string hex)
+        {
+            // Check if it's color or custom
+            switch (hex)
+            {
+                case "61":
+                case "62":
+                case "41":
+                    return LightMode.Color;
+                case "60":
+                    return LightMode.Custom;
+                case "2a":
+                case "2b": 
+                case "2c":
+                case "2d":
+                case "2e":
+                case "2f":
+                    return LightMode.Preset;
+            }
+
+            // Fallback: check if it's preset when it's in range
+            if (int.TryParse(hex, out var result))
+            {
+                if (25 <= result && result <= 38)
+                {
+                    return LightMode.Preset;
+                }
+            }
+
+            // Fallback
+            return LightMode.Unknown;
+        }
+
+        private static Color DetermineColor(LightMode mode, byte[] data)
+        {
+            switch (mode)
+            {
+                case LightMode.Color:
+                    return Color.FromArgb(data[6], data[7], data[8]);
+                case LightMode.White:
+                    return Color.White;
+                default:
+                    return Color.Transparent;
+            }
+        }
+        #endregion
     }
 }
