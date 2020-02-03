@@ -115,11 +115,14 @@ namespace MagicHome
         }
         #endregion
 
+        #region Networking
         /// <summary>
         /// Connects to the light. You need to assign the IP address manually before you call this method.
         /// </summary>
         /// <returns></returns>
         public Task ConnectAsync() => ConnectAsync(this._address);
+
+        public Task ConnectAsync(string ipAddress) => ConnectAsync(IPAddress.Parse(ipAddress));
 
         /// <summary>
         /// Connects to the light with the specified IP address.
@@ -177,6 +180,7 @@ namespace MagicHome
             await SetColorAsync(InitialColor);
             await SetPowerAsync(InitialPowerState);
         }
+        #endregion
 
         #region I/O
         /// <summary>
@@ -342,9 +346,11 @@ namespace MagicHome
         }
         #endregion
 
+        #region Interface Implementations
         public void Dispose()
         {
             _socket?.Dispose();
         }
+        #endregion
     }
 }

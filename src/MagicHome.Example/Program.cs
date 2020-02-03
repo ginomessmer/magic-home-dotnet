@@ -30,7 +30,7 @@ namespace MagicHome.Example
             Console.WriteLine(JsonSerializer.Serialize(light, DefaultJsonOptions));
 
             Console.WriteLine("Calibrating...");
-
+            
             await light.SetColorAsync(Color.Red);
             await Task.Delay(1000);
             await light.SetColorAsync(Color.Green);
