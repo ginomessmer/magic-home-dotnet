@@ -9,8 +9,14 @@ using System.Threading.Tasks;
 
 namespace MagicHome
 {
-    public class Light
+    public class Light : IDisposable
     {
+        #region Properties
+        /// <summary>
+        /// IP address of this light
+        /// </summary>
+        public string IpAddress => _address.ToString();
+
         /// <summary>
         /// Determines whether this instance is connected to the Light.
         /// </summary>
@@ -40,12 +46,21 @@ namespace MagicHome
         /// The maximum timeout during read operations.
         /// </summary>
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(1);
+        #endregion
 
+        #region Fields
         /// <summary>
         /// Network socket to the light.
         /// </summary>
         private readonly Socket _socket;
 
+        /// <summary>
+        /// IP Address of the light.
+        /// </summary>
+        private IPAddress _address;
+        #endregion
+
+        #region Constants
         /// <summary>
         /// Magic Home's default port.
         /// </summary>
@@ -55,20 +70,38 @@ namespace MagicHome
         /// Buffer size for socket communication.
         /// </summary>
         public const int BufferSize = 14;
-
+        #endregion
 
         public Light()
         {
             _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
         }
 
-        public async Task ConnectAsync(IPAddress address)
+        public Light(IPAddress ipAddress) : this()
         {
+            _address = ipAddress;
+        }
+
+        /// <summary>
+        /// Connects to the light. You need to assign the IP address manually before you call this method.
+        /// </summary>
+        /// <returns></returns>
+        public Task ConnectAsync() => ConnectAsync(this._address);
+
+        /// <summary>
+        /// Connects to the light with the specified IP address.
+        /// </summary>
+        /// <param name="ipAddress"></param>
+        /// <returns></returns>
+        public async Task ConnectAsync(IPAddress ipAddress)
+        {
+            _address = ipAddress;
+
             // TODO: Add retries?
-            await _socket.ConnectAsync(address, Port);
+            await _socket.ConnectAsync(_address, Port);
 
             if (!_socket.Connected)
-                throw new LightConnectionException($"Not able to connect to light with IP address {address.ToString()}");
+                throw new LightConnectionException($"Not able to connect to light with IP address {_address}");
 
             await UpdateAsync();
         }
@@ -129,6 +162,11 @@ namespace MagicHome
             });
         }
 
+        /// <summary>
+        /// Applies the checksum to the given data.
+        /// </summary>
+        /// <param name="bytes"></param>
+        /// <returns></returns>
         public static IEnumerable<byte> ApplyChecksum(IReadOnlyList<byte> bytes)
         {
             var packet = new List<byte>();
@@ -192,5 +230,10 @@ namespace MagicHome
             }
         }
         #endregion
+
+        public void Dispose()
+        {
+            _socket?.Dispose();
+        }
     }
 }
