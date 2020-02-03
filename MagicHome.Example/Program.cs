@@ -19,15 +19,28 @@ namespace MagicHome.Example
             Console.WriteLine("Enter IP address of light:");
             var address = Console.ReadLine();
 
-            var light = new Light();
-            await light.ConnectAsync(IPAddress.Parse(address));
+            var light = new Light()
+            {
+                AutoRefreshEnabled = true
+            };
 
+            await light.ConnectAsync(IPAddress.Parse(address));
             await light.TurnOnAsync();
 
             Console.WriteLine(JsonSerializer.Serialize(light, DefaultJsonOptions));
 
-            await light.SetColorAsync(Color.White);
-            await light.TurnOffAsync();
+            Console.WriteLine("Calibrating...");
+
+            await light.SetColorAsync(Color.Red);
+            await Task.Delay(1000);
+            await light.SetColorAsync(Color.Green);
+            await Task.Delay(1000);
+            await light.SetColorAsync(Color.Blue);
+
+            Console.WriteLine("Restoring state...");
+
+            await Task.Delay(1000);
+            await light.RestoreAsync();
 
             Console.ReadLine();
         }

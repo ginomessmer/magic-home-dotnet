@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Linq;
 using System.Net;
 using System.Net.Sockets;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MagicHome
@@ -33,6 +34,16 @@ namespace MagicHome
         public Color Color { get; private set; }
 
         /// <summary>
+        /// The initial color of this light before a connection was established. Can be used to restore the color.
+        /// </summary>
+        public Color InitialColor { get; private set; }
+
+        /// <summary>
+        /// The initial power state of this light before a connection was established. true = on, false = off.
+        /// </summary>
+        public bool InitialPowerState { get; set; }
+
+        /// <summary>
         /// Gets the light mode.
         /// </summary>
         public LightMode Mode { get; private set; }
@@ -46,6 +57,17 @@ namespace MagicHome
         /// The maximum timeout during read operations.
         /// </summary>
         public TimeSpan Timeout { get; set; } = TimeSpan.FromSeconds(1);
+
+        /// <summary>
+        /// Indicates whether to refresh the internal properties state of this instance.
+        /// </summary>
+        public bool AutoRefreshEnabled { get; set; } = false;
+
+        /// <summary>
+        /// The interval for auto refresh. Default is 5 seconds.
+        /// </summary>
+        public TimeSpan AutoRefreshInterval { get; set; } = TimeSpan.FromSeconds(5);
+
         #endregion
 
         #region Fields
@@ -58,6 +80,11 @@ namespace MagicHome
         /// IP Address of the light.
         /// </summary>
         private IPAddress _address;
+
+        /// <summary>
+        /// Internal timer for refresh operations
+        /// </summary>
+        private Timer _autoRefreshTimer;
         #endregion
 
         #region Constants
@@ -109,13 +136,26 @@ namespace MagicHome
             if (!_socket.Connected)
                 throw new LightConnectionException($"Not able to connect to light with IP address {_address}");
 
-            await UpdateAsync();
+            // Refresh
+            await RefreshAsync();
+
+            // Set initial values
+            InitialColor = Color;
+            InitialPowerState = IsOn;
+
+            // Initialize auto refresher
+            _autoRefreshTimer = new Timer(async state =>
+            {
+                // Only refresh when it's enabled
+                if (AutoRefreshEnabled)
+                    await this.RefreshAsync();
+            }, null, TimeSpan.Zero, AutoRefreshInterval);
         }
 
         /// <summary>
-        /// Updates the internal state of this instance by gathering all necessary data from the light.
+        /// Refreshes the internal state of this instance by gathering all necessary data from the light.
         /// </summary>
-        public async Task UpdateAsync()
+        public async Task RefreshAsync()
         {
             await SendAsync(0x81, 0x8a, 0x8b); // Send instruction to retrieve data later
             var result = await ReadAsync();
@@ -126,6 +166,16 @@ namespace MagicHome
             IsOn = DeterminePowerState(resultAsHex[2]); // Power state
             Mode = DetermineLightMode(resultAsHex[3]);
             Color = DetermineColor(Mode, result);
+        }
+
+        /// <summary>
+        /// Restores this light to its initial state before any dirty changes have been made.
+        /// </summary>
+        /// <returns></returns>
+        public async Task RestoreAsync()
+        {
+            await SetColorAsync(InitialColor);
+            await SetPowerAsync(InitialPowerState);
         }
 
         #region I/O
