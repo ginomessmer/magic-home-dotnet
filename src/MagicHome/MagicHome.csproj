@@ -1,7 +1,27 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>2.0.0</Version>
+    <FileVersion>2.0.0.0</FileVersion>
+    <PackageId>MagicHome.NET</PackageId>
+    <Authors>Gino Messmer</Authors>
+    <Company>Gino Messmer</Company>
+    <Product>MagicHome.NET</Product>
+    <Copyright>2020 © Gino Messmer</Copyright>
+    <Description>This library lets you connect to Magic Home enabled smart home lights and control them.</Description>
+    <PackageProjectUrl>https://github.com/ginomessmer/magic-home-dotnet</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ginomessmer/magic-home-dotnet</RepositoryUrl>
+    <PackageTags>Magic Home, MagicHome, Light, Light Controller, RGB, Smart Light, Smart Home, Light, Magic, Home, MagicHome</PackageTags>
+    <PackageLicenseFile>LICENSE.md</PackageLicenseFile>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="..\..\LICENSE.md">
+      <Pack>True</Pack>
+      <PackagePath></PackagePath>
+    </None>
+  </ItemGroup>
 
 </Project>

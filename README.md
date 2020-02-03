@@ -2,7 +2,7 @@
 This unofficial library lets you control Magic Home enabled lights that are connected to the same local area network.
 
 ## Requirements
-- .NET Standard 2.1 or above
+- .NET Standard 2.0 or above
 - Magic Home enabled smart home light device that runs on LEDENET
 
 ## Features
@@ -13,7 +13,10 @@ This unofficial library lets you control Magic Home enabled lights that are conn
 
 ## Show me the code
 ```cs
+var light = new Light();
 await light.ConnectAsync("192.168.0.10");
+
+Console.WriteLine(light.Color);
 
 await light.TurnOnAsync();
 
@@ -24,6 +27,7 @@ await light.SetColorAsync(255, 255, 255);
 await Task.Delay(500);
 
 await light.RestoreAsync();
+light.Dispose();
 ```
 
 ### Credit where credit is due
