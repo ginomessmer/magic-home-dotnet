@@ -1,4 +1,7 @@
-# Magic Home Light SDK for .NET
+# Magic Home Light SDK for .NET 
+[![Build Status](https://dev.azure.com/ginomessmer/MagicHome.NET/_apis/build/status/ginomessmer.magic-home-dotnet?branchName=master)](https://dev.azure.com/ginomessmer/MagicHome.NET/_build/latest?definitionId=4&branchName=master)
+![Nuget](https://img.shields.io/nuget/v/MagicHome.NET)
+
 This unofficial library lets you control Magic Home enabled lights that are connected to the same local area network.
 
 ## Requirements
