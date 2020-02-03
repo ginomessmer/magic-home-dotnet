@@ -134,8 +134,8 @@ namespace MagicHome
             var packet = new List<byte>();
             byte checksum = 0;
 
-            checksum = Convert.ToByte(packet.Sum(b => b)); // checksum = 'sum of all byte elements in array'
-            checksum = Convert.ToByte(checksum & 0xFF); // checksum = checksum AND 255
+            checksum = (byte) bytes.Sum(b => b); // checksum = 'sum of all byte elements in array'
+            checksum &= 0xFF; // checksum = checksum AND 255
 
             packet.AddRange(bytes); // First things first, add our bytes
             packet.Add(checksum); // Then, append the checksum at the end
