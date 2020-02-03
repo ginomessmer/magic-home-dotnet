@@ -213,7 +213,7 @@ namespace MagicHome
             return Task.Run(() =>
             {
                 if (UseChecksum)
-                    bytes = ApplyChecksum(bytes.ToList());
+                    bytes = CalculateChecksum(bytes.ToList());
 
                 _socket.Send(bytes.ToArray());
             });
@@ -224,7 +224,7 @@ namespace MagicHome
         /// </summary>
         /// <param name="bytes"></param>
         /// <returns></returns>
-        public static IEnumerable<byte> ApplyChecksum(IReadOnlyList<byte> bytes)
+        public static IEnumerable<byte> CalculateChecksum(IReadOnlyList<byte> bytes)
         {
             var packet = new List<byte>();
             byte checksum = 0;
