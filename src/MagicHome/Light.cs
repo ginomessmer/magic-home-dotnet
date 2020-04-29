@@ -163,7 +163,7 @@ namespace MagicHome
         {
             await SendAsync(0x81, 0x8a, 0x8b); // Send instruction to retrieve data later
             var result = await ReadAsync();
-            
+
             var resultAsHex = result.Select(r => r.ToString("X")).ToArray(); // Convert to hex
 
             // Populate properties
@@ -234,7 +234,7 @@ namespace MagicHome
             var packet = new List<byte>();
             byte checksum = 0;
 
-            checksum = (byte) bytes.Sum(b => b); // checksum = 'sum of all byte elements in array'
+            checksum = (byte)bytes.Sum(b => b); // checksum = 'sum of all byte elements in array'
             checksum &= 0xFF; // checksum = checksum AND 255
 
             packet.AddRange(bytes); // First things first, add our bytes
@@ -253,8 +253,8 @@ namespace MagicHome
         /// <returns></returns>
         public async Task SetPowerAsync(bool isOn)
         {
-            var packet = isOn ? new byte[] {0x71, 0x23, 0x0f} : new byte[] {0x71, 0x24, 0x0f};
-            
+            var packet = isOn ? new byte[] { 0x71, 0x23, 0x0f } : new byte[] { 0x71, 0x24, 0x0f };
+
             await SendAsync(packet);
             IsOn = isOn;
         }
@@ -277,10 +277,19 @@ namespace MagicHome
         /// </summary>
         /// <param name="color"></param>
         /// <returns></returns>
-        public async Task SetColorAsync(Color color)
+        public async Task SetColorAsync(Color color, int brightness = 100)
         {
-            await SendAsync(0x41, 
-                color.R, color.G, color.B,
+            if (brightness > 100 || brightness < 0)
+            {
+                brightness = 100;
+            }
+
+            byte r = GetByteFromInt((int)Math.Round((double)color.R / 100 * brightness));
+            byte g = GetByteFromInt((int)Math.Round((double)color.G / 100 * brightness));
+            byte b = GetByteFromInt((int)Math.Round((double)color.B / 100 * brightness));
+
+            await SendAsync(0x41,
+                r, g, b,
                 0x00, 0x00, 0x0f);
 
             Color = color;
@@ -312,7 +321,7 @@ namespace MagicHome
                 case "60":
                     return LightMode.Custom;
                 case "2a":
-                case "2b": 
+                case "2b":
                 case "2c":
                 case "2d":
                 case "2e":
@@ -344,6 +353,11 @@ namespace MagicHome
                 default:
                     return Color.Transparent;
             }
+        }
+
+        private static byte GetByteFromInt(int number)
+        {
+            return BitConverter.GetBytes(number)[0];
         }
         #endregion
 
